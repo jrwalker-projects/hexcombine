@@ -1,0 +1,57 @@
+---
+title: "hexcombine"
+output: html_notebook
+---
+
+This is a personalized version of combined hex stickers based on a [blog post by the constantly wonderful Maëlle Salmon](http://www.masalmon.eu/2018/02/22/hexcombine/)  
+
+```{r setup}
+library("magrittr")
+set.seed(123)
+ultimate_sample <- fs::dir_ls("hexagons") %>%
+  sample(size = 15)
+no_row <- 4
+no_col <- 4
+
+row_paths <- split(ultimate_sample, rep(1:no_col, each = no_row))
+
+# let's be crazy
+read_append <- . %>%
+  magick::image_read() %>%
+  magick::image_append()
+
+rows <- purrr::map(row_paths, read_append)
+```
+
+```{r imageread}
+magick::image_read(ultimate_sample[1:15])
+info <- magick::image_read(ultimate_sample[1]) %>%
+  magick::image_info()
+height <- info$height
+width <- info$width
+```
+
+```{r}
+my_laptop <- magick::image_blank(width = width * (no_col + 0.5), #made some adjustments
+                    height = height * no_row * 0.75,
+                    col = "#75917e")
+
+for(i in 1:no_row){
+  if(i/2 == floor(i/2)){
+    offset1 <- 0
+  }else{
+    offset1 <- (width/2) 
+  }
+  
+  offset2 <- (i-1)*(height*0.75)
+  
+  my_laptop <- magick::image_composite(my_laptop, rows[[i]],
+                                       offset = paste0("+", offset1,
+                                                       "+", offset2))
+}
+
+magick::image_write(my_laptop, "my_laptop.png")
+```
+
+
+
